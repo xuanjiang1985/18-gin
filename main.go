@@ -1,18 +1,19 @@
 package main
 
 import (
-	"18-gin/api/user"
-	"18-gin/utils"
+	"fmt"
 	"github.com/andlabs/ui"
 	_ "github.com/andlabs/ui/winmanifest"
-	"github.com/gin-gonic/gin"
 	"github.com/go-ini/ini"
-	"log"
+	"github.com/go-vgo/robotgo"
 	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 var mainwin *ui.Window
+var configPath string
 
 func myUi() ui.Control {
 	vbox := ui.NewVerticalBox()
@@ -23,7 +24,8 @@ func myUi() ui.Control {
 
 	input1 := ui.NewEntry()
 	input2 := ui.NewEntry()
-	x, y := getPosition()
+
+	x, y := getPosition(configPath)
 	input1.SetText(x)
 	input2.SetText(y)
 
@@ -63,24 +65,23 @@ func setupUI() {
 	mainwin.Show()
 }
 
-func main() {
-	go webService()
-
-	ui.Main(setupUI)
+func init() {
+	args := os.Args
+	if strings.Contains(args[0], "go-build") {
+		configPath = "./config/setting.ini"
+	} else {
+		configPath, _ = mainDir()
+		configPath += "/config/setting.ini"
+	}
 }
 
-func webService() {
-	defer func() {
-		if err := recover(); err != nil {
-			log.Println("webService Error: ", err)
-		}
-	}()
+func main() {
 
-	router := gin.Default()
-	router.Use(utils.Cors())
-	// This handler will match /user/john but will not match /user/ or /user
-	router.GET("/user/:name", user.Name)
-	router.Run(":8091")
+	robotgo.ScrollMouse(10, "up")
+	robotgo.MouseClick("left", true)
+	robotgo.MoveMouseSmooth(100, 200, 1.0, 100.0)
+
+	ui.Main(setupUI)
 }
 
 func store(input1, input2 *ui.Entry) {
@@ -104,35 +105,44 @@ func store(input1, input2 *ui.Entry) {
 		return
 	}
 
-	if savePosition(xStr, yStr) {
+	if savePosition(xStr, yStr, configPath) {
 		ui.MsgBox(mainwin, "消息", "保存成功")
 	} else {
 		ui.MsgBoxError(mainwin, "错误", "保存失败")
 	}
 }
 
-func getPosition() (x, y string) {
-	cfg, err := ini.Load("./config/config.ini")
+func getPosition(configPath string) (x, y string) {
+	cfg, err := ini.Load(configPath)
 	if err != nil {
-		log.Printf("Fail to read file: %v", err)
+		fmt.Printf("Fail to read file: %v %s", err, configPath)
 		os.Exit(1)
 	}
 
 	return cfg.Section("position").Key("x").String(), cfg.Section("position").Key("y").String()
 }
 
-func savePosition(x, y string) bool {
-	cfg, err := ini.Load("./config/config.ini")
+func savePosition(x, y, configPath string) bool {
+	cfg, err := ini.Load(configPath)
 	if err != nil {
-		log.Printf("Fail to read file: %v", err)
+		fmt.Printf("Fail to read file: %v %s", err, configPath)
 		os.Exit(1)
 	}
 	cfg.Section("position").Key("x").SetValue(x)
 	cfg.Section("position").Key("y").SetValue(y)
-	err = cfg.SaveTo("./config/config.ini")
+	err = cfg.SaveTo(configPath)
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 		return false
 	}
 	return true
+}
+
+func mainDir() (string, error) {
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		return "", err
+	}
+
+	return dir, nil
 }
