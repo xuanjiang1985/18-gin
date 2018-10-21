@@ -5,7 +5,6 @@ import (
 	"github.com/andlabs/ui"
 	_ "github.com/andlabs/ui/winmanifest"
 	"github.com/go-ini/ini"
-	"github.com/go-vgo/robotgo"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -14,6 +13,9 @@ import (
 
 var mainwin *ui.Window
 var configPath string
+var msgEntry *ui.MultilineEntry
+var sc chan string
+var done chan int
 
 func myUi() ui.Control {
 	vbox := ui.NewVerticalBox()
@@ -37,18 +39,37 @@ func myUi() ui.Control {
 	hbox.Append(entryForm, false)
 
 	storeBtn := ui.NewButton("保存")
+	startBtn := ui.NewButton("启动")
+	stopBtn := ui.NewButton("停止")
 	hbox.Append(storeBtn, false)
+	hbox.Append(startBtn, false)
+	hbox.Append(stopBtn, false)
 
 	storeBtn.OnClicked(func(*ui.Button) {
 		store(input1, input2)
 	})
 
+	startBtn.OnClicked(func(*ui.Button) {
+
+		sendMsg(msgEntry, sc, done)
+
+	})
+
 	vbox.Append(hbox, false)
+	vbox.Append(ui.NewHorizontalSeparator(), false)
+
+	// 下部分
+	hbox2 := ui.NewHorizontalBox()
+	msgEntry = ui.NewMultilineEntry()
+	msgEntry.SetReadOnly(true)
+	hbox2.Append(msgEntry, false)
+
+	vbox.Append(hbox2, false)
 	return vbox
 }
 
 func setupUI() {
-	mainwin = ui.NewWindow("UI配置", 640, 480, true)
+	mainwin = ui.NewWindow("UI配置", 300, 480, true)
 	mainwin.OnClosing(func(*ui.Window) bool {
 		ui.Quit()
 		return true
@@ -76,10 +97,15 @@ func init() {
 }
 
 func main() {
+	done = make(chan int)
+	sc = make(chan string, 10)
+	go func() {
+		for i := 0; i < 10; i++ {
 
-	robotgo.ScrollMouse(10, "up")
-	robotgo.MouseClick("left", true)
-	robotgo.MoveMouseSmooth(100, 200, 1.0, 100.0)
+			sc <- "hello\n"
+		}
+		done <- 1
+	}()
 
 	ui.Main(setupUI)
 }
@@ -145,4 +171,20 @@ func mainDir() (string, error) {
 	}
 
 	return dir, nil
+}
+
+func sendMsg(box *ui.MultilineEntry, sc chan string, done chan int) {
+	go func() {
+		ui.QueueMain(func() {
+
+			select {
+			case m := <-sc:
+				box.Append(m)
+			case <-done:
+				return
+			}
+
+		})
+	}()
+
 }
