@@ -3,40 +3,6 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:1e96579bb1afe3e9ae4cdc883f8f94cc06917da38fdb95a47fd8db1f629888af"
-  name = "github.com/BurntSushi/xgb"
-  packages = [
-    ".",
-    "shape",
-    "xinerama",
-    "xproto",
-  ]
-  pruneopts = "UT"
-  revision = "27f122750802c950b2c869a5b63dafcf590ced95"
-
-[[projects]]
-  branch = "master"
-  digest = "1:93698a5b0ee991e62e44f2278c0a5baa3545f9ff64366e67060876aa8753e15d"
-  name = "github.com/BurntSushi/xgbutil"
-  packages = [
-    ".",
-    "ewmh",
-    "xevent",
-    "xprop",
-  ]
-  pruneopts = "UT"
-  revision = "f7c97cef3b4e6c88280a5a7091c3314e815ca243"
-
-[[projects]]
-  digest = "1:e92f5581902c345eb4ceffdcd4a854fb8f73cf436d47d837d1ec98ef1fe0a214"
-  name = "github.com/StackExchange/wmi"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "5d049714c4a64225c3c79a7cf7d02f7fb5b96338"
-  version = "1.0.0"
-
-[[projects]]
-  branch = "master"
   digest = "1:72938f5cbc0208313aebf204dce11bc3ef2fad9453d89818656406e15fd38035"
   name = "github.com/andlabs/ui"
   packages = [
@@ -76,28 +42,6 @@
   version = "v1.39.0"
 
 [[projects]]
-  digest = "1:64a5a67c69b70c2420e607a8545d674a23778ed9c3e80607bfd17b77c6c87f6a"
-  name = "github.com/go-ole/go-ole"
-  packages = [
-    ".",
-    "oleutil",
-  ]
-  pruneopts = "UT"
-  revision = "a41e3c4b706f6ae8dfbff342b06e40fa4d2d0506"
-  version = "v1.2.1"
-
-[[projects]]
-  digest = "1:33f54bc1659da4c667ce73ca2f86f4268ac53645219d96eeb40d45086746ac02"
-  name = "github.com/go-vgo/robotgo"
-  packages = [
-    ".",
-    "clipboard",
-  ]
-  pruneopts = "UT"
-  revision = "21426f901e0f05445b425d36159681630edc68f3"
-  version = "0.60.0"
-
-[[projects]]
   digest = "1:6ba96a683441984156b05568b9d31dbc846d3336d21ac220fcc819a367dc1f65"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
@@ -113,58 +57,11 @@
   version = "1.0.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:a65caa49a129fb2fc74981bfcd815cba09ea1e67cabe8130fe14be2751b93c81"
-  name = "github.com/lxn/win"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "a7f87360b10eafe73bd3ff01db16976fe7560fbf"
-
-[[projects]]
   digest = "1:fa610f9fe6a93f4a75e64c83673dfff9bf1a34bbb21e6102021b6bc7850834a3"
   name = "github.com/mattn/go-isatty"
   packages = ["."]
   pruneopts = "UT"
   revision = "57fdcb988a5c543893cc61bce354a6e24ab70022"
-
-[[projects]]
-  digest = "1:6411dc2c8891eb05c1d0599abf571e81f72cbc97ebd223b44d45712f4f1799c2"
-  name = "github.com/otiai10/gosseract"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "b026a6fd291f00736db60738f4e83a79d26359cb"
-  version = "v2.2.0"
-
-[[projects]]
-  branch = "master"
-  digest = "1:deecefcb6e39b2af73fd2d6b20f5bc94de98981545f2e863d6e7a8126738f1f0"
-  name = "github.com/robotn/gohook"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "40c3386427eb558eb26426d3f56ac766c3e32335"
-
-[[projects]]
-  digest = "1:7395b855a6078ad2e6c40311402a057a91125fb9f32cf228e1b32cdc57c33538"
-  name = "github.com/shirou/gopsutil"
-  packages = [
-    "cpu",
-    "host",
-    "internal/common",
-    "mem",
-    "net",
-    "process",
-  ]
-  pruneopts = "UT"
-  revision = "8048a2e9c5773235122027dd585cf821b2af1249"
-  version = "v2.18.07"
-
-[[projects]]
-  branch = "master"
-  digest = "1:99c6a6dab47067c9b898e8c8b13d130c6ab4ffbcc4b7cc6236c2cd0b1e344f5b"
-  name = "github.com/shirou/w32"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "bb4de0191aa41b5507caa14b0650cdbddcd9280b"
 
 [[projects]]
   digest = "1:c268acaa4a4d94a467980e5e91452eb61c460145765293dc0aed48e5e9919cc6"
@@ -175,28 +72,9 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:b1d4d17f29b95b9ec0a888d420a042690ea364073c40a972b43e19308761d707"
-  name = "github.com/vcaesar/imgo"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "7a535c786a552a980ff9d883fda108dce63361ef"
-
-[[projects]]
-  branch = "master"
-  digest = "1:9a2af239201fee92f0e90db0f139b74ab072b7e0dff9a205b8513a26889e78ba"
-  name = "golang.org/x/image"
-  packages = ["bmp"]
-  pruneopts = "UT"
-  revision = "991ec62608f3c0da01d400756917825d1e2fd528"
-
-[[projects]]
-  branch = "master"
-  digest = "1:f5aa274a0377f85735edc7fedfb0811d3cbc20af91633797cb359e29c3272271"
+  digest = "1:0a40b0bdd57a93e741d8557465be3a2edeec408e9b6399586ad65bbe8e355796"
   name = "golang.org/x/sys"
-  packages = [
-    "unix",
-    "windows",
-  ]
+  packages = ["unix"]
   pruneopts = "UT"
   revision = "fa43e7bc11baaae89f3f902b2b4d832b68234844"
 
@@ -223,7 +101,6 @@
     "github.com/andlabs/ui/winmanifest",
     "github.com/gin-gonic/gin",
     "github.com/go-ini/ini",
-    "github.com/go-vgo/robotgo",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

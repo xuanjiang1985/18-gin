@@ -4,18 +4,19 @@ import (
 	"fmt"
 	"github.com/andlabs/ui"
 	_ "github.com/andlabs/ui/winmanifest"
+	"github.com/gin-gonic/gin"
 	"github.com/go-ini/ini"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
+	"unicode/utf8"
 )
 
 var mainwin *ui.Window
 var configPath string
 var msgEntry *ui.MultilineEntry
-var sc chan string
-var done chan int
 
 func myUi() ui.Control {
 	vbox := ui.NewVerticalBox()
@@ -49,10 +50,15 @@ func myUi() ui.Control {
 		store(input1, input2)
 	})
 
-	startBtn.OnClicked(func(*ui.Button) {
+	startBtn.OnClicked(func(this *ui.Button) {
 
-		sendMsg(msgEntry, sc, done)
+		sendMsg(msgEntry, "脚本启动...")
+		this.Disable()
+	})
 
+	stopBtn.OnClicked(func(*ui.Button) {
+		sendMsg(msgEntry, "脚本停止")
+		startBtn.Enable()
 	})
 
 	vbox.Append(hbox, false)
@@ -97,15 +103,7 @@ func init() {
 }
 
 func main() {
-	done = make(chan int)
-	sc = make(chan string, 10)
-	go func() {
-		for i := 0; i < 10; i++ {
-
-			sc <- "hello\n"
-		}
-		done <- 1
-	}()
+	go webService()
 
 	ui.Main(setupUI)
 }
@@ -115,26 +113,26 @@ func store(input1, input2 *ui.Entry) {
 	yStr := input2.Text()
 
 	if xStr == "" || yStr == "" {
-		ui.MsgBoxError(mainwin, "警告", "坐标不能为空")
+		sendMsg(msgEntry, "坐标不能为空")
 		return
 	}
 
 	_, err := strconv.Atoi(xStr)
 	if err != nil {
-		ui.MsgBoxError(mainwin, "警告", "坐标必须是整数")
+		sendMsg(msgEntry, "坐标必须是整数")
 		return
 	}
 
 	_, err = strconv.Atoi(yStr)
 	if err != nil {
-		ui.MsgBoxError(mainwin, "警告", "坐标必须是整数")
+		sendMsg(msgEntry, "坐标必须是整数")
 		return
 	}
 
 	if savePosition(xStr, yStr, configPath) {
-		ui.MsgBox(mainwin, "消息", "保存成功")
+		sendMsg(msgEntry, "保存成功")
 	} else {
-		ui.MsgBoxError(mainwin, "错误", "保存失败")
+		sendMsg(msgEntry, "保存失败")
 	}
 }
 
@@ -173,18 +171,26 @@ func mainDir() (string, error) {
 	return dir, nil
 }
 
-func sendMsg(box *ui.MultilineEntry, sc chan string, done chan int) {
-	go func() {
+func sendMsg(box *ui.MultilineEntry, msg string) {
+	timeStr := time.Now().Format("01-02 15:04:05")
+	hastext := box.Text()
+	if utf8.RuneCountInString(hastext) > 370 {
+		box.SetText(timeStr + " " + msg + "\n")
+	} else {
+		box.Append(timeStr + " " + msg + "\n")
+	}
+}
+
+func webService() {
+	router := gin.Default()
+	// Query string parameters are parsed using the existing underlying request object.
+	// The request responds to a url matching:  /welcome?firstname=Jane&lastname=Doe
+	router.GET("/info", func(c *gin.Context) {
+
+		msg := c.Query("msg") // shortcut for c.Request.URL.Query().Get("lastname")
 		ui.QueueMain(func() {
-
-			select {
-			case m := <-sc:
-				box.Append(m)
-			case <-done:
-				return
-			}
-
+			sendMsg(msgEntry, msg)
 		})
-	}()
-
+	})
+	router.Run(":8081")
 }
