@@ -11,12 +11,12 @@ import (
 
 	"github.com/andlabs/ui"
 	_ "github.com/andlabs/ui/winmanifest"
-	"github.com/gin-gonic/gin"
 	"github.com/go-ini/ini"
 )
 
 var mainwin *ui.Window
 var configPath string
+var savePath string
 var msgEntry *ui.MultilineEntry
 
 func myUi() ui.Control {
@@ -35,8 +35,8 @@ func myUi() ui.Control {
 
 	entryForm := ui.NewForm()
 	entryForm.SetPadded(true)
-	entryForm.Append("横坐标", input1, false)
-	entryForm.Append("纵坐标", input2, false)
+	entryForm.Append("网址", input1, false)
+	entryForm.Append("并发", input2, false)
 
 	hbox.Append(entryForm, false)
 
@@ -47,19 +47,27 @@ func myUi() ui.Control {
 	hbox.Append(startBtn, false)
 	hbox.Append(stopBtn, false)
 
-	storeBtn.OnClicked(func(*ui.Button) {
-		store(input1, input2)
+	storeBtn.OnClicked(func(this *ui.Button) {
+		ok := store(input1, input2)
+		if ok {
+			this.Disable()
+		}
 	})
 
 	startBtn.OnClicked(func(this *ui.Button) {
-
-		sendMsg(msgEntry, "脚本启动...")
+		if storeBtn.Enabled() {
+			sendMsg(msgEntry, "请先保存")
+			return
+		}
+		sendMsg(msgEntry, "脚本启动")
+		getUrlData()
 		this.Disable()
 	})
 
 	stopBtn.OnClicked(func(*ui.Button) {
 		sendMsg(msgEntry, "脚本停止")
 		startBtn.Enable()
+		storeBtn.Enable()
 	})
 
 	vbox.Append(hbox, false)
@@ -97,44 +105,71 @@ func init() {
 	args := os.Args
 	if strings.Contains(args[0], "go-build") {
 		configPath = "./config/setting.ini"
+		savePath = "./saveData"
 	} else {
 		configPath, _ = mainDir()
 		configPath += "/config/setting.ini"
+		savePath = "./saveData"
 	}
 }
 
 func main() {
-	go webService()
-
 	ui.Main(setupUI)
 }
 
-func store(input1, input2 *ui.Entry) {
+func store(input1, input2 *ui.Entry) bool {
 	xStr := input1.Text()
 	yStr := input2.Text()
 
 	if xStr == "" || yStr == "" {
-		sendMsg(msgEntry, "坐标不能为空")
-		return
+		sendMsg(msgEntry, "不能为空")
+		return false
 	}
 
-	_, err := strconv.Atoi(xStr)
+	qty, err := strconv.Atoi(yStr)
 	if err != nil {
-		sendMsg(msgEntry, "坐标必须是整数")
-		return
+		sendMsg(msgEntry, "必须是整数")
+		return false
 	}
 
-	_, err = strconv.Atoi(yStr)
-	if err != nil {
-		sendMsg(msgEntry, "坐标必须是整数")
-		return
+	if qty <= 0 || qty > 100 {
+		sendMsg(msgEntry, "并发数量在1~100之间 ")
+		return false
 	}
 
 	if savePosition(xStr, yStr, configPath) {
 		sendMsg(msgEntry, "保存成功")
+		return true
 	} else {
 		sendMsg(msgEntry, "保存失败")
+		return false
 	}
+}
+
+func getUrlData() {
+	_, qty := getPosition(configPath)
+
+	qtyInt, err := strconv.Atoi(qty)
+	if err != nil {
+		sendMsg(msgEntry, "并发数量必须是整数")
+	}
+
+	if qtyInt <= 0 || qtyInt > 100 {
+		sendMsg(msgEntry, "并发数量在1~100之间 ")
+		return
+	}
+
+	// 并发请求http get
+	for i := 1; i <= qtyInt; i++ {
+		go func(i int) {
+			str := "正在发起第" + strconv.Itoa(i) + "次请求"
+			ui.QueueMain(func() {
+				sendMsg(msgEntry, str)
+			})
+
+		}(i)
+	}
+
 }
 
 func getPosition(configPath string) (x, y string) {
@@ -144,7 +179,7 @@ func getPosition(configPath string) (x, y string) {
 		os.Exit(1)
 	}
 
-	return cfg.Section("position").Key("x").String(), cfg.Section("position").Key("y").String()
+	return cfg.Section("server").Key("host").String(), cfg.Section("server").Key("qty").String()
 }
 
 func savePosition(x, y, configPath string) bool {
@@ -153,8 +188,8 @@ func savePosition(x, y, configPath string) bool {
 		fmt.Printf("Fail to read file: %v %s", err, configPath)
 		os.Exit(1)
 	}
-	cfg.Section("position").Key("x").SetValue(x)
-	cfg.Section("position").Key("y").SetValue(y)
+	cfg.Section("server").Key("host").SetValue(x)
+	cfg.Section("server").Key("qty").SetValue(y)
 	err = cfg.SaveTo(configPath)
 	if err != nil {
 		fmt.Println(err)
@@ -182,16 +217,16 @@ func sendMsg(box *ui.MultilineEntry, msg string) {
 	}
 }
 
-func webService() {
-	router := gin.Default()
-	// Query string parameters are parsed using the existing underlying request object.
-	// The request responds to a url matching:  /welcome?firstname=Jane&lastname=Doe
-	router.GET("/info", func(c *gin.Context) {
+// func webService() {
+// 	router := gin.Default()
+// 	// Query string parameters are parsed using the existing underlying request object.
+// 	// The request responds to a url matching:  /welcome?firstname=Jane&lastname=Doe
+// 	router.GET("/info", func(c *gin.Context) {
 
-		msg := c.Query("msg") // shortcut for c.Request.URL.Query().Get("lastname")
-		ui.QueueMain(func() {
-			sendMsg(msgEntry, msg)
-		})
-	})
-	router.Run(":8081")
-}
+// 		msg := c.Query("msg") // shortcut for c.Request.URL.Query().Get("lastname")
+// 		ui.QueueMain(func() {
+// 			sendMsg(msgEntry, msg)
+// 		})
+// 	})
+// 	router.Run(":8081")
+// }
