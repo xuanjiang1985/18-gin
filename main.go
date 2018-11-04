@@ -109,7 +109,7 @@ func init() {
 	} else {
 		configPath, _ = mainDir()
 		configPath += "/config/setting.ini"
-		savePath = "./saveData"
+		savePath += "/saveData"
 	}
 }
 
@@ -161,15 +161,22 @@ func getUrlData() {
 
 	// 并发请求http get
 	for i := 1; i <= qtyInt; i++ {
-		go func(i int) {
-			str := "正在发起第" + strconv.Itoa(i) + "次请求"
-			ui.QueueMain(func() {
-				sendMsg(msgEntry, str)
-			})
-
-		}(i)
+		go getEachUrl(i)
 	}
 
+}
+
+// 下载网页
+func getEachUrl(i int) {
+	defer func() {
+		if err := recover(); err != nil {
+			sendMsg(msgEntry, "错误退出")
+		}
+	}()
+	str := "正在发起第" + strconv.Itoa(i) + "次请求"
+	ui.QueueMain(func() {
+		sendMsg(msgEntry, str)
+	})
 }
 
 func getPosition(configPath string) (x, y string) {
@@ -210,7 +217,7 @@ func mainDir() (string, error) {
 func sendMsg(box *ui.MultilineEntry, msg string) {
 	timeStr := time.Now().Format("01-02 15:04:05")
 	hastext := box.Text()
-	if utf8.RuneCountInString(hastext) > 370 {
+	if utf8.RuneCountInString(hastext) > 400 {
 		box.SetText(timeStr + " " + msg + "\n")
 	} else {
 		box.Append(timeStr + " " + msg + "\n")
