@@ -1,17 +1,19 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"github.com/andlabs/ui"
+	_ "github.com/andlabs/ui/winmanifest"
+	"github.com/go-ini/ini"
+	"io"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
-	"unicode/utf8"
-
-	"github.com/andlabs/ui"
-	_ "github.com/andlabs/ui/winmanifest"
-	"github.com/go-ini/ini"
 )
 
 var mainwin *ui.Window
@@ -26,6 +28,9 @@ func myUi() ui.Control {
 	hbox := ui.NewHorizontalBox()
 	hbox.SetPadded(true)
 
+	hbox1 := ui.NewHorizontalBox()
+	hbox1.SetPadded(true)
+
 	input1 := ui.NewEntry()
 	input2 := ui.NewEntry()
 
@@ -35,30 +40,29 @@ func myUi() ui.Control {
 
 	entryForm := ui.NewForm()
 	entryForm.SetPadded(true)
-	entryForm.Append("网址", input1, false)
+	entryForm.Append("网址", input1, true)
 	entryForm.Append("并发", input2, false)
 
-	hbox.Append(entryForm, false)
+	hbox.Append(entryForm, true)
 
 	storeBtn := ui.NewButton("保存")
 	startBtn := ui.NewButton("启动")
 	stopBtn := ui.NewButton("停止")
-	hbox.Append(storeBtn, false)
-	hbox.Append(startBtn, false)
-	hbox.Append(stopBtn, false)
+	clearBtn := ui.NewButton("清除")
+	hbox1.Append(storeBtn, false)
+	hbox1.Append(startBtn, false)
+	hbox1.Append(stopBtn, false)
+	hbox1.Append(clearBtn, false)
 
-	storeBtn.OnClicked(func(this *ui.Button) {
-		ok := store(input1, input2)
-		if ok {
-			this.Disable()
-		}
+	storeBtn.OnClicked(func(*ui.Button) {
+		store(input1, input2)
+	})
+
+	clearBtn.OnClicked(func(*ui.Button) {
+		msgEntry.SetText("")
 	})
 
 	startBtn.OnClicked(func(this *ui.Button) {
-		if storeBtn.Enabled() {
-			sendMsg(msgEntry, "请先保存")
-			return
-		}
 		sendMsg(msgEntry, "脚本启动")
 		getUrlData()
 		this.Disable()
@@ -71,6 +75,7 @@ func myUi() ui.Control {
 	})
 
 	vbox.Append(hbox, false)
+	vbox.Append(hbox1, false)
 	vbox.Append(ui.NewHorizontalSeparator(), false)
 
 	// 下部分
@@ -84,7 +89,7 @@ func myUi() ui.Control {
 }
 
 func setupUI() {
-	mainwin = ui.NewWindow("UI配置", 300, 480, true)
+	mainwin = ui.NewWindow("网站压测", 350, 480, true)
 	mainwin.OnClosing(func(*ui.Window) bool {
 		ui.Quit()
 		return true
@@ -147,7 +152,7 @@ func store(input1, input2 *ui.Entry) bool {
 }
 
 func getUrlData() {
-	_, qty := getPosition(configPath)
+	url, qty := getPosition(configPath)
 
 	qtyInt, err := strconv.Atoi(qty)
 	if err != nil {
@@ -161,19 +166,38 @@ func getUrlData() {
 
 	// 并发请求http get
 	for i := 1; i <= qtyInt; i++ {
-		go getEachUrl(i)
+		go getEachUrl(i, url)
 	}
 
 }
 
 // 下载网页
-func getEachUrl(i int) {
+func getEachUrl(i int, url string) {
 	defer func() {
 		if err := recover(); err != nil {
-			sendMsg(msgEntry, "错误退出")
+			sendMsg(msgEntry, "错误退出"+strconv.Itoa(i)+"次")
 		}
 	}()
 	str := "正在发起第" + strconv.Itoa(i) + "次请求"
+	ui.QueueMain(func() {
+		sendMsg(msgEntry, str)
+	})
+	// http.get
+	start := time.Now()
+	resp, err := http.Get(url)
+	if err != nil {
+		str = "第" + strconv.Itoa(i) + "次请求报错"
+	}
+	defer resp.Body.Close()
+
+	out, err := os.Create(savePath + "/" + strconv.Itoa(i) + ".html")
+	content, err := ioutil.ReadAll(resp.Body)
+	_, err = io.Copy(out, bytes.NewReader(content))
+	if err != nil {
+		str = "第" + strconv.Itoa(i) + "次保存报错"
+	}
+	val := time.Since(start)
+	str = "第" + strconv.Itoa(i) + "次请求耗时" + val.String()
 	ui.QueueMain(func() {
 		sendMsg(msgEntry, str)
 	})
@@ -216,12 +240,12 @@ func mainDir() (string, error) {
 
 func sendMsg(box *ui.MultilineEntry, msg string) {
 	timeStr := time.Now().Format("01-02 15:04:05")
-	hastext := box.Text()
-	if utf8.RuneCountInString(hastext) > 400 {
-		box.SetText(timeStr + " " + msg + "\n")
-	} else {
-		box.Append(timeStr + " " + msg + "\n")
-	}
+	//hastext := box.Text()
+	// if utf8.RuneCountInString(hastext) > 1000 {
+	// 	box.SetText(timeStr + " " + msg + "\n")
+	// } else {
+	box.Append(timeStr + " " + msg + "\n")
+	//}
 }
 
 // func webService() {
